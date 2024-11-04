@@ -1,0 +1,190 @@
+const TelegramBot = require('node-telegram-bot-api');
+
+// Użyj zmiennej środowiskowej dla tokena
+const token = process.env.TELEGRAM_TOKEN;
+const bot = new TelegramBot(token, { polling: true });
+
+// Obsługa komendy /kasyno
+bot.onText(/\/kasyno/, (msg) => {
+  const chatId = msg.chat.id;
+  showGameMenu(chatId);
+});
+
+// Funkcja pokazująca menu gier
+function showGameMenu(chatId) {
+  const menuMessage = `
+Wybierz grę wojowniku`;
+  
+  bot.sendMessage(chatId, menuMessage, {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "🎲 Kostka", callback_data: "dice" }],
+        [{ text: "🃏 Karty", callback_data: "cards" }],
+        [{ text: "🎰 Automaty", callback_data: "slots" }],
+        [{ text: "🎡 Ruletka", callback_data: "roulette" }],
+        [{ text: "🖤 Blackjack", callback_data: "blackjack" }],
+        [{ text: "🎲 Kości", callback_data: "yahtzee" }],
+        [{ text: "🎯 Koło fortuny", callback_data: "wheel_of_fortune" }],
+        [{ text: "🎫 Loteria", callback_data: "lottery" }]
+      ]
+    }
+  });
+}
+
+// Funkcje do gier
+function rollDice(chatId) {
+  bot.sendMessage(chatId, "🎲 Kostka rzucona...");
+  setTimeout(() => {
+    const result = Math.floor(Math.random() * 6) + 1;
+    bot.sendMessage(chatId, `🎲 Wyrzuciłeś: ${result}`);
+    showGameMenu(chatId);
+  }, 2000); // 2 sekundy opóźnienia
+}
+
+function drawCard(chatId) {
+  bot.sendMessage(chatId, "🃏 Wyciągasz kartę...");
+  setTimeout(() => {
+    const suits = ["♠️", "♥️", "♣️", "♦️"];
+    const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+    const suit = suits[Math.floor(Math.random() * suits.length)];
+    const rank = ranks[Math.floor(Math.random() * ranks.length)];
+    bot.sendMessage(chatId, `🃏 Wylosowana karta: ${rank}${suit}`);
+    showGameMenu(chatId);
+  }, 2000);
+}
+
+function spinRoulette(chatId) {
+  const colors = ["🔴 Czerwony", "⚫ Czarny", "🟢 Zero"];
+  
+  bot.sendMessage(chatId, "🎡 Kręcimy rosyjską ruletką...");
+  setTimeout(() => {
+    const result = colors[Math.floor(Math.random() * colors.length)];
+    bot.sendMessage(chatId, `🎡 Ruletka wylosowała: ${result}`);
+    showGameMenu(chatId);
+  }, 5000); // 5 sekundy opóźnienia
+}
+
+function playSlots(chatId) {
+  bot.sendMessage(chatId, "🎰 Automat uruchomiony...");
+  setTimeout(() => {
+    const symbols = ["🍒", "🍋", "🍊", "🍉", "⭐", "7️⃣"];
+    const slot1 = symbols[Math.floor(Math.random() * symbols.length)];
+    const slot2 = symbols[Math.floor(Math.random() * symbols.length)];
+    const slot3 = symbols[Math.floor(Math.random() * symbols.length)];
+  
+    const resultMessage = `🎰 Automaty:\n| ${slot1} | ${slot2} | ${slot3} |`;
+    bot.sendMessage(chatId, resultMessage);
+  
+    if (slot1 === slot2 && slot2 === slot3) {
+      bot.sendMessage(chatId, "🎉 Great job brachu.");
+    } else {
+      bot.sendMessage(chatId, "☠ No i przejebałeś wypłatę.");
+    }
+    showGameMenu(chatId);
+  }, 3000); // 3 sekundy opóźnienia
+}
+
+function playBlackjack(chatId) {
+  bot.sendMessage(chatId, "🃏 Rozdajemy karty...");
+  setTimeout(() => {
+    const cardValues = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    const playerHand = [cardValues[Math.floor(Math.random() * cardValues.length)], cardValues[Math.floor(Math.random() * cardValues.length)]];
+    const dealerHand = [cardValues[Math.floor(Math.random() * cardValues.length)], cardValues[Math.floor(Math.random() * cardValues.length)]];
+    
+    const playerTotal = playerHand.reduce((a, b) => a + b, 0);
+    const dealerTotal = dealerHand.reduce((a, b) => a + b, 0);
+
+    bot.sendMessage(chatId, `🖤 Blackjack:\nTwoje karty: ${playerHand.join(", ")} (Razem: ${playerTotal})\nKarty krupiera: ${dealerHand.join(", ")} (Razem: ${dealerTotal})`);
+
+    if (playerTotal > 21) {
+      bot.sendMessage(chatId, "💥 Jaki noob! Przekroczyłeś 21.");
+    } else if (dealerTotal > 21 || playerTotal > dealerTotal) {
+      bot.sendMessage(chatId, "🎉 Ty spryciarzu! Masz lepszy wynik niż krupier.");
+    } else {
+      bot.sendMessage(chatId, "☠ Wyskakuj z bliczka! Krupier ma lepszy wynik.");
+    }
+    showGameMenu(chatId);
+  }, 3000); // 3 sekundy opóźnienia
+}
+
+function playYahtzee(chatId) {
+  bot.sendMessage(chatId, "🎲 Kości zostały rzucone...");
+  setTimeout(() => {
+    const dice = Array.from({ length: 5 }, () => Math.floor(Math.random() * 6) + 1);
+    bot.sendMessage(chatId, `🎲 Kości:\nWyrzucone liczby: ${dice.join(", ")}`);
+
+    const counts = dice.reduce((acc, num) => { acc[num] = (acc[num] || 0) + 1; return acc; }, {});
+    if (Object.values(counts).includes(5)) {
+      bot.sendMessage(chatId, "5⃣🎉 Yahtzee! Pięć takich samych!");
+    } else if (Object.values(counts).includes(4)) {
+      bot.sendMessage(chatId, "4⃣🎉 Cztery takie same!");
+    } else if (Object.values(counts).includes(3) && Object.values(counts).includes(2)) {
+      bot.sendMessage(chatId, "💯 Full House!");
+    } else {
+      bot.sendMessage(chatId, "🖕 Brak specjalnych układów, oddawaj bliczka loserze.");
+    }
+    showGameMenu(chatId);
+  }, 3000); // 3 sekundy opóźnienia
+}
+
+function spinWheelOfFortune(chatId) {
+  bot.sendMessage(chatId, "🎯 Kręcimy kołem...");
+  setTimeout(() => {
+    const prizes = ["Wygrałeś-> 💰1000$", "💎 500$", "Wygrałeś-> 🍀50g Marihuanki", "Wygrałeś-> 🔖Talon na kurwe i balon", "🎁 Nagroda pocieszenia-> zdechły szcur🐀", "🍆 Chuja wygrałeś", "🍆 Chuja wygrałeś", "🎁 Nagroda pocieszenia-> kredki🖍", "🎁 Nagroda pocieszenia-> okulary🥸",];
+    const result = prizes[Math.floor(Math.random() * prizes.length)];
+    bot.sendMessage(chatId, `🎯 Koło fortuny: ${result}!`);
+    showGameMenu(chatId);
+  }, 5000); // 5 sekundy opóźnienia
+}
+
+function playLottery(chatId) {
+  bot.sendMessage(chatId, "🎫 Szczęśliwy numerek to...");
+  setTimeout(() => {
+    const winningNumber = Math.floor(Math.random() * 10) + 1;
+    const userNumber = Math.floor(Math.random() * 10) + 1;
+
+    bot.sendMessage(chatId, `🎫 Loteria:\nTwój numer: ${userNumber}\nZwycięski numer: ${winningNumber}`);
+
+    if (userNumber === winningNumber) {
+      bot.sendMessage(chatId, "🎉 Gratulacje! Wygrałeś loterię!");
+    } else {
+      bot.sendMessage(chatId, "🚫 Nie oddam ci bliczka.");
+    }
+    showGameMenu(chatId);
+  }, 4000); // 4 sekundy opóźnienia
+}
+
+// Obsługa wyboru gier przez menu
+bot.on("callback_query", (query) => {
+  const chatId = query.message.chat.id;
+  const game = query.data;
+
+  switch (game) {
+    case "dice":
+      rollDice(chatId);
+      break;
+    case "cards":
+      drawCard(chatId);
+      break;
+    case "roulette":
+      spinRoulette(chatId);
+      break;
+    case "slots":
+      playSlots(chatId);
+      break;
+    case "blackjack":
+      playBlackjack(chatId);
+      break;
+    case "yahtzee":
+      playYahtzee(chatId);
+      break;
+    case "wheel_of_fortune":
+      spinWheelOfFortune(chatId);
+      break;
+    case "lottery":
+      playLottery(chatId);
+      break;
+    default:
+      bot.sendMessage(chatId, "Nieznana gra.");
+  }
+});
